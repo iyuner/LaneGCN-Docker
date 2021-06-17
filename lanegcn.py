@@ -21,8 +21,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 
 file_path = os.path.abspath(__file__)
-root_path = os.path.dirname(file_path)
 model_name = os.path.basename(file_path).split(".")[0]
+
+# change the root_path in cluster env
+root_path = "/local_storage/users/yiya/datasets/lanegcn/lanegcn"
 
 ### config ###
 config = dict()
@@ -54,7 +56,7 @@ config["val_workers"] = config["workers"]
 
 
 """Dataset"""
-# Raw Dataset
+# Raw Dataset, not used now.
 config["train_split"] = os.path.join(
     root_path, "dataset/train/data"
 )
@@ -64,12 +66,12 @@ config["test_split"] = os.path.join(root_path, "dataset/test_obs/data")
 # Preprocessed Dataset
 config["preprocess"] = True # whether use preprocess or not
 config["preprocess_train"] = os.path.join(
-    root_path, "dataset","preprocess", "train_crs_dist6_angle90.p"
+    root_path, "train_crs_dist6_angle90.p"
 )
 config["preprocess_val"] = os.path.join(
-    root_path,"dataset", "preprocess", "val_crs_dist6_angle90.p"
+    root_path, "val_crs_dist6_angle90.p"
 )
-config['preprocess_test'] = os.path.join(root_path, "dataset",'preprocess', 'test_test.p')
+config['preprocess_test'] = os.path.join(root_path, 'test_test.p')
 
 """Model"""
 config["rot_aug"] = False
