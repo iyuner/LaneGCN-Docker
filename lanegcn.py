@@ -55,11 +55,15 @@ config["val_workers"] = config["workers"]
 
 """Dataset"""
 # Raw Dataset
-config["train_split"] = os.path.join(
-    root_path, "dataset/train/data"
-)
-config["val_split"] = os.path.join(root_path, "dataset/val/data")
-config["test_split"] = os.path.join(root_path, "dataset/test_obs/data")
+# config["train_split"] = os.path.join(
+#     root_path, "dataset/train/data"
+# )
+# config["val_split"] = os.path.join(root_path, "dataset/val/data")
+# config["test_split"] = os.path.join(root_path, "dataset/test_obs/data")
+
+config["train_split"] = os.path.join("/mnt/d/doc/try/ArgoData", "train/data")
+config["val_split"] = os.path.join("/mnt/d/doc/try/ArgoData", "val/data")
+config["test_split"] = os.path.join("/mnt/d/doc/try/ArgoData", "test_obs/data")
 
 # Preprocessed Dataset
 config["preprocess"] = True # whether use preprocess or not
@@ -901,10 +905,10 @@ def pred_metrics(preds, gt_preds, has_preds):
 
 def get_model():
     net = Net(config)
-    net = net.cuda()
+    # net = net.cuda()
 
-    loss = Loss(config).cuda()
-    post_process = PostProcess(config).cuda()
+    loss = Loss(config)# .cuda()
+    post_process = PostProcess(config)# .cuda()
 
     params = net.parameters()
     opt = Optimizer(params, config)

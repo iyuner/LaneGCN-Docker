@@ -122,17 +122,18 @@ class ArgoDataset(Dataset):
         steps = [mapping[x] for x in df['TIMESTAMP'].values]
         steps = np.asarray(steps, np.int64)
 
+        # get the group of track_id
         objs = df.groupby(['TRACK_ID', 'OBJECT_TYPE']).groups
         keys = list(objs.keys())
         obj_type = [x[1] for x in keys]
 
         agt_idx = obj_type.index('AGENT')
-        idcs = objs[keys[agt_idx]]
+        idcs = objs[keys[agt_idx]] # get all indeces (50 timestamps's data) of 'AGENT' in the df
        
         agt_traj = trajs[idcs]
         agt_step = steps[idcs]
 
-        del keys[agt_idx]
+        del keys[agt_idx] # eg, 22 agents -> 21 agents
         ctx_trajs, ctx_steps = [], []
         for key in keys:
             idcs = objs[key]
@@ -146,13 +147,13 @@ class ArgoDataset(Dataset):
         return data
     
     def get_obj_feats(self, data):
-        orig = data['trajs'][0][19].copy().astype(np.float32)
+        orig = data['trajs'][0][19].copy().astype(np.float32) # get the pose of after 2 s (in total 5 s)
 
         if self.train and self.config['rot_aug']:
             theta = np.random.rand() * np.pi * 2.0
         else:
             pre = data['trajs'][0][18] - orig
-            theta = np.pi - np.arctan2(pre[1], pre[0])
+            theta = np.pi - np.arctan2(pre[1], pre[0]) # get the AGENT's heading at 2 s
 
         rot = np.asarray([
             [np.cos(theta), -np.sin(theta)],
@@ -165,12 +166,13 @@ class ArgoDataset(Dataset):
 
             gt_pred = np.zeros((30, 2), np.float32)
             has_pred = np.zeros(30, np.bool)
-            future_mask = np.logical_and(step >= 20, step < 50)
+            future_mask = np.logical_and(step >= 20, step < 50) # use this np.logical_and to get the post_step/traj (last 3 s' data)
             post_step = step[future_mask] - 20
             post_traj = traj[future_mask]
             gt_pred[post_step] = post_traj
             has_pred[post_step] = 1
             
+            # deal with first 2 s
             obs_mask = step < 20
             step = step[obs_mask]
             traj = traj[obs_mask]
@@ -178,6 +180,7 @@ class ArgoDataset(Dataset):
             step = step[idcs]
             traj = traj[idcs]
             
+            # ?? what for?
             for i in range(len(step)):
                 if step[i] == 19 - (len(step) - 1) + i:
                     break
@@ -188,12 +191,13 @@ class ArgoDataset(Dataset):
             feat[step, :2] = np.matmul(rot, (traj - orig.reshape(-1, 2)).T).T
             feat[step, 2] = 1.0
 
+            # chech pose at 2 s is in the prediction range, select it if it is
             x_min, x_max, y_min, y_max = self.config['pred_range']
             if feat[-1, 0] < x_min or feat[-1, 0] > x_max or feat[-1, 1] < y_min or feat[-1, 1] > y_max:
                 continue
 
-            ctrs.append(feat[-1, :2].copy())
-            feat[1:, :2] -= feat[:-1, :2]
+            ctrs.append(feat[-1, :2].copy()) # add the distance at 2s with the agent to ctrs
+            feat[1:, :2] -= feat[:-1, :2] # change to every step distance.
             feat[step[0], :2] = 0
             feats.append(feat)
             gt_preds.append(gt_pred)
